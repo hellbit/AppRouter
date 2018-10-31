@@ -8,6 +8,12 @@
 
 import XCTest
 import AppRouter
+#if canImport(AppRouterExtensionAPI)
+import AppRouterExtensionAPI
+#endif
+#if canImport(AppRouterLight)
+import AppRouterLight
+#endif
 
 class AppRouterNavigationsTests: XCTestCase {
     
@@ -66,6 +72,33 @@ class AppRouterNavigationsTests: XCTestCase {
             expectation.fulfill()
         })
         waitForExpectations(timeout: 1, handler: nil)
+
+    func testPopViewControllerAnimated() {
+        let nav = UINavigationController()
+        let first = FirstController()
+        let second = SecondController()
+        let third = ThirdController()
+
+        XCTAssertNil(nav.popViewController(animated: true, completion: { XCTFail() }))
+        
+        nav.viewControllers = [first]
+        XCTAssertNil(first.pop(animated: true, completion: { XCTFail() }))
+        
+        nav.viewControllers = [first, second, third]
+        XCTAssertNil(first.pop(animated: true, completion: { XCTFail() }))
+        
+        AppRouter.rootViewController = nav
+        let expectation =  self.expectation(description: "")
+        delay(0) {
+            var popped : [UIViewController]? = []
+            popped = second.pop(animated: true) {
+                XCTAssertTrue(popped?.first == second)
+                XCTAssertTrue(popped?.last == third)
+                XCTAssertNil(first.pop(animated: false))
+                expectation.fulfill()
+            }
+        }
+        waitForExpectations(timeout: 4, handler: nil)
     }
     
     func testPopViewController() {
